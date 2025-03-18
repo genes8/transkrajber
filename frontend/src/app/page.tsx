@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { FaMicrophone, FaFolder, FaSearch, FaQuestion } from "react-icons/fa";
+import { FaMicrophone, FaFolder, FaSearch, FaQuestion, FaPause } from "react-icons/fa";
 import { IoDocumentText } from "react-icons/io5";
 
 export default function Home() {
@@ -11,12 +11,113 @@ export default function Home() {
   const [transcriptionData, setTranscriptionData] = useState<any | null>(null);
   const [selectedSnimak, setSelectedSnimak] = useState<any | null>(null);
   const [showSnimakDetails, setShowSnimakDetails] = useState<boolean>(false);
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [recordingTime, setRecordingTime] = useState<number>(0);
+  const [recordingStatus, setRecordingStatus] = useState<'stopped' | 'recording' | 'paused'>('stopped');
+  const snimanjeDivRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Dodajemo stanja za chat i pretragu
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [chatQuery, setChatQuery] = useState<string>("");
+  const [chatResponse, setChatResponse] = useState<string>("");
+  const [searchResults, setSearchResults] = useState<Array<{id: number, time: string, content: string}>>([]);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  
+  // Funkcija za formatiranje vremena (sekunde u format MM:SS)
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
+  // Funkcija za upravljanje snimanjem
+  const handleRecordingToggle = () => {
+    if (recordingStatus === 'stopped') {
+      // Započinjemo snimanje
+      setRecordingStatus('recording');
+      setRecordingTime(0);
+      // Pokrećemo tajmer
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } else if (recordingStatus === 'recording') {
+      // Pauziramo snimanje
+      setRecordingStatus('paused');
+      // Zaustavljamo tajmer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    } else {
+      // Nastavljamo snimanje
+      setRecordingStatus('recording');
+      // Ponovo pokrećemo tajmer
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    }
+  };
+
+  // Funkcija za zaustavljanje snimanja
+  const stopRecording = () => {
+    setRecordingStatus('stopped');
+    // Zaustavljamo tajmer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    // Ovde bismo mogli da sačuvamo snimak ili uradimo nešto drugo sa njim
+    // Za sada samo resetujemo vreme
+    setRecordingTime(0);
+  };
+
+  // Čistimo tajmer kada se komponenta unmount-uje
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
+  // Primer realističnog transkripta sa više govornika
+  const [transkript, setTranskript] = useState<string>(`
+[00:00:05] Marko: Dobrodošli na naš sastanak o novom projektu za razvoj mobilne aplikacije. Danas ćemo razgovarati o ključnim funkcionalnostima i rokovima.
+[00:00:18] Ana: Hvala Marko. Pre nego što počnemo, da li možemo da prođemo kroz zahteve klijenta koje smo dobili prošle nedelje?
+[00:00:30] Marko: Naravno. Klijent želi aplikaciju za praćenje fizičke aktivnosti sa integracijom društvenih mreža. Glavne funkcionalnosti uključuju praćenje koraka, kalorija, i povezivanje sa prijateljima.
+[00:01:05] Nikola: Da li znamo koji je njihov budžet za ovaj projekat? To će uticati na to koliko kompleksne funkcionalnosti možemo da implementiramo.
+[00:01:20] Marko: Budžet je oko 25.000 evra, što bi trebalo da bude dovoljno za osnovne funkcionalnosti i nekoliko naprednih opcija.
+[00:01:45] Ana: Koji je rok za završetak projekta? Moramo da budemo realni u proceni vremena potrebnog za razvoj.
+[00:02:00] Marko: Klijent želi prvu verziju za 3 meseca, a finalnu verziju za 6 meseci od danas.
+[00:02:15] Nikola: To je prilično ambiciozan rok. Da li imamo resurse za to? Trebaće nam barem dva iOS developera i dva Android developera.
+[00:02:35] Ana: Slažem se sa Nikolom. Takođe, trebaće nam i backend developer i neko ko će raditi na dizajnu korisničkog interfejsa.
+[00:03:00] Marko: Trenutno imamo dva iOS developera, jednog Android developera, i jednog backend developera. Moraćemo da zaposlimo još jednog Android developera i UI/UX dizajnera.
+[00:03:30] Nikola: Šta je sa testiranjem? Ne smemo da zanemarimo QA proces.
+[00:03:45] Marko: Dobar point. Angažovaćemo i QA inženjera na pola radnog vremena.
+[00:04:10] Ana: Koje tehnologije ćemo koristiti za razvoj? Da li idemo sa nativnim razvojem ili ćemo koristiti cross-platform rešenje?
+[00:04:30] Marko: S obzirom na zahteve klijenta za performansama, mislim da je bolje da idemo sa nativnim razvojem. Swift za iOS i Kotlin za Android.
+[00:05:00] Nikola: A za backend? Predlažem da koristimo Node.js sa Express frameworkom i MongoDB za bazu podataka.
+[00:05:20] Ana: To zvuči razumno. Takođe, moramo da razmislimo o infrastrukturi. Da li ćemo koristiti AWS ili neki drugi cloud provider?
+[00:05:40] Marko: Koristićemo AWS, pošto već imamo iskustva sa njihovim servisima. Koristićemo EC2 instance za hosting i S3 za skladištenje podataka.
+[00:06:10] Nikola: Šta je sa analitikom? Klijent će sigurno želeti da prati korišćenje aplikacije.
+[00:06:25] Marko: Implementiraćemo Google Analytics i Firebase za praćenje korisničkog ponašanja.
+[00:06:45] Ana: Moramo da razmislimo i o bezbednosti. Aplikacija će prikupljati lične podatke korisnika, pa moramo da osiguramo da su ti podaci zaštićeni.
+[00:07:10] Marko: Apsolutno. Implementiraćemo OAuth 2.0 za autentifikaciju i enkripciju za zaštitu podataka.
+[00:07:35] Nikola: Kada možemo da počnemo sa razvojem? Da li imamo sve potrebne informacije?
+[00:07:50] Marko: Mislim da možemo da počnemo sledeće nedelje. Do tada ću pripremiti detaljnu specifikaciju projekta i podeliti je sa svima.
+[00:08:15] Ana: Zvuči dobro. Takođe, predlažem da organizujemo nedeljne sastanke za praćenje napretka.
+[00:08:30] Marko: Slažem se. Zakazaću sastanke za svaki ponedeljak u 10h. Ako nema drugih pitanja, mislim da možemo da završimo sastanak.
+[00:08:50] Nikola: Nemam više pitanja. Hvala svima na učešću.
+[00:09:00] Ana: Hvala. Radujem se saradnji na ovom projektu.
+[00:09:10] Marko: Hvala svima. Vidimo se sledeće nedelje.
+  `);
+  
   // Dodajemo mock podatke za prikaz
   const mockSnimci = [
     {
       id: 1,
-      naziv: 'Sastanak sa klijentom',
+      naziv: 'Sastanak o razvoju mobilne aplikacije',
       datum: '2024-03-18',
       duzina: '15:23',
       status: 'Obradjeno'
@@ -32,6 +133,136 @@ export default function Home() {
 
   // Simuliramo uspešno otpremanje
   const [snimci, setSnimci] = useState(mockSnimci);
+  
+  // Funkcija za pretragu transkripta
+  const searchTranscript = () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    
+    // Simuliramo pretragu u transkriptu
+    setTimeout(() => {
+      const query = searchQuery.toLowerCase();
+      const lines = transkript.split('\n').filter(line => line.trim());
+      
+      const results = lines.filter(line => 
+        line.toLowerCase().includes(query)
+      ).map((line, index) => {
+        const timeMatch = line.match(/\[(\d{2}:\d{2}:\d{2})\]/);
+        const time = timeMatch ? timeMatch[1] : "";
+        
+        // Označavamo pronađeni tekst
+        const highlightedLine = line.replace(
+          new RegExp(query, 'gi'), 
+          match => `<mark class="bg-yellow-200">${match}</mark>`
+        );
+        
+        return { id: index, time, content: highlightedLine };
+      });
+      
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 500); // Simuliramo malo kašnjenje kao u pravoj pretrazi
+  };
+  
+  // Funkcija za chat sa transkriptom
+  const chatWithTranscript = () => {
+    if (!chatQuery.trim()) return;
+    
+    setIsSearching(true);
+    
+    // Simuliramo AI odgovor na osnovu transkripta
+    setTimeout(() => {
+      let response = "";
+      const query = chatQuery.toLowerCase();
+      
+      // Jednostavna logika za generisanje odgovora na osnovu upita
+      if (query.includes("budžet") || query.includes("budzet")) {
+        response = "Budžet za projekat je oko 25.000 evra, što bi trebalo da bude dovoljno za osnovne funkcionalnosti i nekoliko naprednih opcija.";
+      } else if (query.includes("rok")) {
+        response = "Klijent želi prvu verziju za 3 meseca, a finalnu verziju za 6 meseci.";
+      } else if (query.includes("tehnologij")) {
+        response = "Za razvoj će se koristiti Swift za iOS, Kotlin za Android, Node.js sa Express frameworkom i MongoDB za backend, a infrastruktura će biti na AWS-u.";
+      } else if (query.includes("tim") || query.includes("developer")) {
+        response = "Tim će se sastojati od dva iOS developera, dva Android developera, jednog backend developera, UI/UX dizajnera i QA inženjera na pola radnog vremena.";
+      } else if (query.includes("sastanak") || query.includes("sastanci")) {
+        response = "Nedeljni sastanci za praćenje napretka biće organizovani svakog ponedeljka u 10h.";
+      } else if (query.includes("bezbednost") || query.includes("sigurnost")) {
+        response = "Za bezbednost će se implementirati OAuth 2.0 za autentifikaciju i enkripcija za zaštitu podataka korisnika.";
+      } else if (query.includes("analitik")) {
+        response = "Za analitiku će se koristiti Google Analytics i Firebase za praćenje korisničkog ponašanja.";
+      } else if (query.includes("funkcionalnost")) {
+        response = "Glavne funkcionalnosti aplikacije uključuju praćenje koraka, kalorija, i povezivanje sa prijateljima kroz integraciju društvenih mreža.";
+      } else {
+        response = "Na osnovu transkripta, ne mogu da pronađem specifičan odgovor na vaše pitanje. Pokušajte da preformulišete pitanje ili postavite konkretnije pitanje vezano za sastanak o razvoju mobilne aplikacije.";
+      }
+      
+      setChatResponse(response);
+      setIsSearching(false);
+    }, 1000);
+  };
+  
+  // Funkcija za sumiranje transkripta
+  const summarizeTranscript = () => {
+    setIsSearching(true);
+    
+    setTimeout(() => {
+      const summary = `<p class="mb-2 text-gray-900 font-semibold"><strong>Sažetak sastanka:</strong></p>
+      <ul class="list-disc pl-5 space-y-1 text-gray-900">
+        <li>Projekat: Razvoj mobilne aplikacije za praćenje fizičke aktivnosti sa integracijom društvenih mreža</li>
+        <li>Budžet: 25.000 evra</li>
+        <li>Rokovi: Prva verzija za 3 meseca, finalna verzija za 6 meseci</li>
+        <li>Tim: 2 iOS developera, 2 Android developera, 1 backend developer, 1 UI/UX dizajner, 1 QA inženjer (pola radnog vremena)</li>
+        <li>Tehnologije: Swift (iOS), Kotlin (Android), Node.js sa Express i MongoDB (backend), AWS (infrastruktura)</li>
+        <li>Dodatno: Implementacija Google Analytics, Firebase, OAuth 2.0 za bezbednost</li>
+        <li>Sledeći koraci: Detaljna specifikacija projekta sledeće nedelje, nedeljni sastanci ponedeljkom u 10h</li>
+      </ul>`;
+      
+      setChatResponse(summary);
+      setIsSearching(false);
+    }, 1500);
+  };
+  
+  // Funkcija za izvlačenje ključnih tačaka
+  const extractKeyPoints = () => {
+    setIsSearching(true);
+    
+    setTimeout(() => {
+      const keyPoints = `<p class="mb-2 text-gray-900 font-semibold"><strong>Ključne tačke:</strong></p>
+      <ul class="list-disc pl-5 space-y-1 text-gray-900">
+        <li>Aplikacija za praćenje fizičke aktivnosti sa društvenim funkcijama</li>
+        <li>Budžet od 25.000 evra</li>
+        <li>Rok za prvu verziju: 3 meseca</li>
+        <li>Potrebno zaposliti još jednog Android developera i UI/UX dizajnera</li>
+        <li>Koristiće se nativni razvoj umesto cross-platform rešenja</li>
+        <li>AWS infrastruktura za hosting i skladištenje</li>
+        <li>Poseban fokus na bezbednost ličnih podataka</li>
+      </ul>`;
+      
+      setChatResponse(keyPoints);
+      setIsSearching(false);
+    }, 1200);
+  };
+  
+  // Funkcija za pronalaženje akcionih stavki
+  const findActionItems = () => {
+    setIsSearching(true);
+    
+    setTimeout(() => {
+      const actionItems = `<p class="mb-2 text-gray-900 font-semibold"><strong>Akcione stavke:</strong></p>
+      <ul class="list-disc pl-5 space-y-1 text-gray-900">
+        <li>Marko: Pripremiti detaljnu specifikaciju projekta do sledeće nedelje</li>
+        <li>Marko: Zakazati nedeljne sastanke ponedeljkom u 10h</li>
+        <li>Tim: Zaposliti još jednog Android developera</li>
+        <li>Tim: Zaposliti UI/UX dizajnera</li>
+        <li>Tim: Angažovati QA inženjera na pola radnog vremena</li>
+        <li>Svi: Početak razvoja sledeće nedelje</li>
+      </ul>`;
+      
+      setChatResponse(actionItems);
+      setIsSearching(false);
+    }, 1000);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,8 +275,15 @@ export default function Home() {
               <p className="text-xl md:text-2xl mb-8 text-gray-600">Pretvorite audio u tekst i analizirajte razgovore uz pomoć veštačke inteligencije</p>
               <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                 <button 
-                  onClick={() => setActiveTab("record")} 
+                  onClick={() => {
+                    setActiveTab("record");
+                    // Skroluj do sekcije sa mikrofonom nakon kratkog odlaganja
+                    setTimeout(() => {
+                      snimanjeDivRef.current?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }} 
                   className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                  data-component-name="Home"
                 >
                   Započni snimanje
                 </button>
@@ -169,12 +407,38 @@ export default function Home() {
           {/* Tab Content */}
           <div className="bg-white shadow-sm rounded-lg p-6">
             {activeTab === "record" && (
-              <div>
-                <div className="text-center py-8">
-                  <button className="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-20 h-20 flex items-center justify-center mx-auto transition-colors duration-200">
-                    <FaMicrophone size={32} />
+              <div ref={snimanjeDivRef} data-component-name="Home">
+                <div className="text-center py-8" data-component-name="Home">
+                  {/* Tajmer za snimanje */}
+                  {recordingStatus !== 'stopped' && (
+                    <div className="mb-4 text-xl font-semibold text-gray-700">
+                      {formatTime(recordingTime)}
+                    </div>
+                  )}
+                  
+                  {/* Dugme za snimanje/pauziranje */}
+                  <button 
+                    className={`${recordingStatus === 'recording' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded-full w-20 h-20 flex items-center justify-center mx-auto transition-colors duration-200`}
+                    onClick={() => handleRecordingToggle()}
+                    data-component-name="Home"
+                  >
+                    {recordingStatus === 'recording' ? <FaPause size={32} /> : <FaMicrophone size={32} />}
                   </button>
-                  <p className="mt-4 text-gray-600">Kliknite da započnete snimanje</p>
+                  <p className="mt-4 text-gray-600">
+                    {recordingStatus === 'recording' ? 'Kliknite da pauzirate snimanje' : 
+                     recordingStatus === 'paused' ? 'Kliknite da nastavite snimanje' : 
+                     'Kliknite da započnete snimanje'}
+                  </p>
+                  
+                  {/* Dugme za zaustavljanje snimanja */}
+                  {recordingStatus !== 'stopped' && (
+                    <button 
+                      className="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
+                      onClick={stopRecording}
+                    >
+                      Zaustavi snimanje
+                    </button>
+                  )}
                 </div>
                 
                 <div className="mt-6 text-center text-gray-500 italic">
@@ -361,11 +625,11 @@ export default function Home() {
                 
                 <div className="mb-8">
                   <button className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200">
-                    Generiši Sažetak
+                    Sumiraj
                   </button>
                   
                   <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <p className="text-gray-500 italic">Sažetak će biti prikazan ovde nakon generisanja...</p>
+                    <p className="text-gray-500 italic">Sumarizacija će biti prikazana ovde nakon generisanja...</p>
                   </div>
                 </div>
                 
@@ -382,7 +646,7 @@ export default function Home() {
                       placeholder="Unesite pitanje o razgovoru"
                     />
                     <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-md transition-colors duration-200">
-                      Dobij Odgovor
+                      Traži Odgovor
                     </button>
                   </div>
                   
@@ -449,12 +713,109 @@ export default function Home() {
             
             {selectedSnimak.status === 'Obradjeno' ? (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Transkript</h3>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-60 overflow-y-auto">
-                  <p className="text-gray-700">
-                    Ovo je primer transkripta za snimak. Ovde bi se prikazao stvarni transkript nakon obrade audio snimka. 
-                    Možemo dodati i vremenske oznake, označiti govornike, i druge funkcionalnosti za poboljšanje čitljivosti transkripta.
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Leva kolona - Transkript */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Transkript</h3>
+                    <div className="bg-white p-4 rounded-lg border border-gray-200 max-h-96 overflow-y-auto shadow-sm" data-component-name="Home">
+                      <div className="text-gray-700" data-component-name="Home">
+                        {transkript.split('\n').filter((line: string) => line.trim()).map((line: string, index: number) => {
+                          // Izdvajamo vreme, govornika i tekst
+                          const match = line.match(/\[(\d{2}:\d{2}:\d{2})\] ([^:]+): (.+)/);
+                          if (!match) return null;
+                          
+                          const [_, time, speaker, text] = match;
+                          
+                          return (
+                            <div key={index} className="mb-2 pb-2 border-b border-gray-100 last:border-0">
+                              <span className="text-xs font-medium text-gray-500 mr-2">[{time}]</span>
+                              <span className="font-semibold text-blue-700">{speaker}:</span>
+                              <span className="ml-1">{text}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Desna kolona - Chat */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Analiza Transkripta</h3>
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm">
+                      <h4 className="text-md font-semibold text-gray-800 mb-3 pb-2 border-b border-blue-100 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                        Chat sa transkriptom
+                      </h4>
+                      
+                      <div className="mb-4">
+                        <div className="flex">
+                          <input 
+                            type="text" 
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium" 
+                            placeholder="Postavite pitanje..."
+                            data-component-name="Home"
+                            value={chatQuery}
+                            onChange={(e) => setChatQuery(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && chatWithTranscript()}
+                          />
+                          <button 
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-md transition-colors duration-200"
+                            onClick={chatWithTranscript}
+                          >
+                            Pitaj
+                          </button>
+                        </div>
+                        
+                        <div className="flex mt-2 text-sm space-x-2">
+                          <button 
+                            className="px-2 py-1 bg-white hover:bg-gray-100 rounded-md text-gray-700 transition-colors border border-gray-200"
+                            onClick={summarizeTranscript}
+                          >
+                            Sumiraj transkript
+                          </button>
+                          <button 
+                            className="px-2 py-1 bg-white hover:bg-gray-100 rounded-md text-gray-700 transition-colors border border-gray-200"
+                            onClick={extractKeyPoints}
+                          >
+                            Izvuci ključne tačke
+                          </button>
+                          <button 
+                            className="px-2 py-1 bg-white hover:bg-gray-100 rounded-md text-gray-700 transition-colors border border-gray-200"
+                            onClick={findActionItems}
+                          >
+                            Pronađi stavke
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white p-3 rounded-md border border-gray-200 text-gray-900 font-medium min-h-[150px]">
+                        {isSearching ? (
+                          <div className="flex justify-center items-center py-4">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                            <span className="ml-2 text-gray-600">Obrađujem...</span>
+                          </div>
+                        ) : searchResults.length > 0 ? (
+                          <div className="max-h-40 overflow-y-auto">
+                            <h5 className="font-medium text-gray-800 mb-2">Rezultati pretrage:</h5>
+                            {searchResults.map((result) => (
+                              <div key={result.id} className="mb-2 pb-2 border-b border-gray-100 last:border-0">
+                                <span className="text-xs font-medium text-gray-500 mr-2">[{result.time}]</span>
+                                <span className="text-gray-900 font-medium" dangerouslySetInnerHTML={{ __html: result.content }} />
+                              </div>
+                            ))}
+                          </div>
+                        ) : chatResponse ? (
+                          <div className="max-h-[300px] overflow-y-auto">
+                            <div className="text-gray-900 font-medium" dangerouslySetInnerHTML={{ __html: chatResponse }} />
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 text-sm italic">Postavite pitanje o transkriptu da dobijete rezultate...</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
