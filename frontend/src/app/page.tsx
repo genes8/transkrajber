@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { FaMicrophone, FaFolder, FaSearch, FaQuestion, FaPause } from "react-icons/fa";
+import Link from "next/link";
+import { FaMicrophone, FaFolder, FaSearch, FaQuestion, FaPause, FaExternalLinkAlt } from "react-icons/fa";
 import { IoDocumentText } from "react-icons/io5";
 
 export default function Home() {
@@ -451,7 +452,8 @@ export default function Home() {
                     <input 
                       type="text" 
                       id="recording-name" 
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600" 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 placeholder-gray-600 text-gray-900" 
+                      data-component-name="Home"
                       placeholder="Unesite naziv za ovaj snimak"
                     />
                   </div>
@@ -827,7 +829,7 @@ export default function Home() {
               </div>
             )}
             
-            <div className="flex justify-center space-x-2 mt-6">
+            <div className="flex justify-center space-x-2 mt-6" data-component-name="Home">
               <button className="px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors text-gray-700 flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -850,6 +852,29 @@ export default function Home() {
                     </svg>
                     Word
                   </button>
+                  
+                  <a 
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      // Čuvamo podatke u localStorage
+                      localStorage.setItem('transkrajber_snimak', JSON.stringify({
+                        naziv: selectedSnimak.naziv,
+                        datum: selectedSnimak.datum,
+                        duzina: selectedSnimak.duzina,
+                        transkript: transkript
+                      }));
+                      // Otvaramo novu stranicu bez parametara u URL-u
+                      window.open('/prosireni-prikaz', '_blank');
+                    }}
+                    className="px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors text-blue-600 flex items-center"
+                    data-component-name="Home"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Proširen prikaz
+                  </a>
                 </>
               )}
               
