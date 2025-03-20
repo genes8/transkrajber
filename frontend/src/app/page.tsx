@@ -1,28 +1,26 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { FaMicrophone, FaFolder, FaSearch, FaQuestion, FaPause, FaExternalLinkAlt } from "react-icons/fa";
+import { FaMicrophone, FaFolder, FaSearch, FaQuestion, FaPause} from "react-icons/fa";
 import { IoDocumentText } from "react-icons/io5";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<string>("record");
-  const [selectedRecording, setSelectedRecording] = useState<string | null>(null);
-  const [transcriptionData, setTranscriptionData] = useState<any | null>(null);
+  // eslint-disable  @typescript-eslint/no-explicit-any
+  const [transcriptionData] = useState<any | null>(null);
+  // eslint-disable  @typescript-eslint/no-explicit-any
   const [selectedSnimak, setSelectedSnimak] = useState<any | null>(null);
   const [showSnimakDetails, setShowSnimakDetails] = useState<boolean>(false);
-  const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingTime, setRecordingTime] = useState<number>(0);
   const [recordingStatus, setRecordingStatus] = useState<'stopped' | 'recording' | 'paused'>('stopped');
   const snimanjeDivRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Dodajemo stanja za chat i pretragu
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  // const [searchQuery] = useState<string>("");
   const [chatQuery, setChatQuery] = useState<string>("");
   const [chatResponse, setChatResponse] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<Array<{id: number, time: string, content: string}>>([]);
+  const [searchResults] = useState<Array<{id: number, time: string, content: string}>>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
   
   // Funkcija za formatiranje vremena (sekunde u format MM:SS)
@@ -83,7 +81,7 @@ export default function Home() {
   }, []);
 
   // Primer realističnog transkripta sa više govornika
-  const [transkript, setTranskript] = useState<string>(`
+  const [transkript] = useState<string>(`
 [00:00:05] Marko: Dobrodošli na naš sastanak o novom projektu za razvoj mobilne aplikacije. Danas ćemo razgovarati o ključnim funkcionalnostima i rokovima.
 [00:00:18] Ana: Hvala Marko. Pre nego što počnemo, da li možemo da prođemo kroz zahteve klijenta koje smo dobili prošle nedelje?
 [00:00:30] Marko: Naravno. Klijent želi aplikaciju za praćenje fizičke aktivnosti sa integracijom društvenih mreža. Glavne funkcionalnosti uključuju praćenje koraka, kalorija, i povezivanje sa prijateljima.
@@ -133,38 +131,38 @@ export default function Home() {
   ];
 
   // Simuliramo uspešno otpremanje
-  const [snimci, setSnimci] = useState(mockSnimci);
+  const [snimci] = useState(mockSnimci);
   
   // Funkcija za pretragu transkripta
-  const searchTranscript = () => {
-    if (!searchQuery.trim()) return;
+  // const searchTranscript = () => {
+  //   if (!searchQuery.trim()) return;
     
-    setIsSearching(true);
+  //   setIsSearching(true);
     
-    // Simuliramo pretragu u transkriptu
-    setTimeout(() => {
-      const query = searchQuery.toLowerCase();
-      const lines = transkript.split('\n').filter(line => line.trim());
+  //   // Simuliramo pretragu u transkriptu
+  //   setTimeout(() => {
+  //     const query = searchQuery.toLowerCase();
+  //     const lines = transkript.split('\n').filter(line => line.trim());
       
-      const results = lines.filter(line => 
-        line.toLowerCase().includes(query)
-      ).map((line, index) => {
-        const timeMatch = line.match(/\[(\d{2}:\d{2}:\d{2})\]/);
-        const time = timeMatch ? timeMatch[1] : "";
+  //     const results = lines.filter(line => 
+  //       line.toLowerCase().includes(query)
+  //     ).map((line, index) => {
+  //       const timeMatch = line.match(/\[(\d{2}:\d{2}:\d{2})\]/);
+  //       const time = timeMatch ? timeMatch[1] : "";
         
-        // Označavamo pronađeni tekst
-        const highlightedLine = line.replace(
-          new RegExp(query, 'gi'), 
-          match => `<mark class="bg-yellow-200">${match}</mark>`
-        );
+  //       // Označavamo pronađeni tekst
+  //       const highlightedLine = line.replace(
+  //         new RegExp(query, 'gi'), 
+  //         match => `<mark class="bg-yellow-200">${match}</mark>`
+  //       );
         
-        return { id: index, time, content: highlightedLine };
-      });
+  //       return { id: index, time, content: highlightedLine };
+  //     });
       
-      setSearchResults(results);
-      setIsSearching(false);
-    }, 500); // Simuliramo malo kašnjenje kao u pravoj pretrazi
-  };
+  //     setSearchResults(results);
+  //     setIsSearching(false);
+  //   }, 500); // Simuliramo malo kašnjenje kao u pravoj pretrazi
+  // };
   
   // Funkcija za chat sa transkriptom
   const chatWithTranscript = () => {
@@ -612,7 +610,7 @@ export default function Home() {
                   */}
                   
                   <div className="text-center py-8 text-gray-500">
-                    Nema dostupnog transkripta. Izaberite snimak i kliknite na "Transkribuj" da generišete transkript.
+                    {'Nema dostupnog transkripta. Izaberite snimak i kliknite na "Transkribuj" da generišete transkript.'}
                   </div>
                 </div>
               </div>
@@ -726,7 +724,7 @@ export default function Home() {
                           const match = line.match(/\[(\d{2}:\d{2}:\d{2})\] ([^:]+): (.+)/);
                           if (!match) return null;
                           
-                          const [_, time, speaker, text] = match;
+                          const [time, speaker, text] = match;
                           
                           return (
                             <div key={index} className="mb-2 pb-2 border-b border-gray-100 last:border-0">
