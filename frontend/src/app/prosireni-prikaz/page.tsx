@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { FaArrowLeft, FaDownload, FaPrint, FaSearch, FaQuestion } from "react-icons/fa";
 
-export default function ProsireniPrikaz() {
+function ProsireniPrikazContent() {
   const searchParams = useSearchParams();
   // const router = useRouter();
   const [transkript, setTranskript] = useState<string>("");
@@ -387,5 +387,14 @@ export default function ProsireniPrikaz() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Glavna komponenta obuhvaćena Suspense boundary-jem
+export default function ProsireniPrikaz() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Učitavanje...</div>}>
+      <ProsireniPrikazContent />
+    </Suspense>
   );
 }
