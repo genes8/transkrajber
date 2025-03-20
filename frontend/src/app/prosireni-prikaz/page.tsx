@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FaArrowLeft, FaDownload, FaPrint, FaSearch, FaQuestion } from "react-icons/fa";
 
 export default function ProsireniPrikaz() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  // const router = useRouter();
   const [transkript, setTranskript] = useState<string>("");
   const [snimakInfo, setSnimakInfo] = useState<{
     naziv: string;
@@ -111,7 +111,7 @@ export default function ProsireniPrikaz() {
       const match = line.match(/\[(\d{2}:\d{2}:\d{2})\] ([^:]+): (.+)/);
       if (!match) return { id: index, time: "", speaker: "", text: line };
       
-      const [_, time, speaker, text] = match;
+      const [time, speaker, text] = match;
       return { id: index, time, speaker, text };
     });
   };
