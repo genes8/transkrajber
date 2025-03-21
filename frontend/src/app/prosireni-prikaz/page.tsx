@@ -111,8 +111,13 @@ function ProsireniPrikazContent() {
       const match = line.match(/\[(\d{2}:\d{2}:\d{2})\] ([^:]+): (.+)/);
       if (!match) return { id: index, time: "", speaker: "", text: line };
       
-      const [time, speaker, text] = match;
-      return { id: index, time, speaker, text };
+      // Ovde je bila greška - match[0] je ceo string, a match[1], match[2], match[3] su grupe
+      return { 
+        id: index, 
+        time: match[1], 
+        speaker: match[2], 
+        text: match[3]
+      };
     });
   };
 
@@ -273,18 +278,22 @@ function ProsireniPrikazContent() {
             <div className="space-y-4">
               {formatiraniTranskript().map((item) => (
                 <div key={item.id} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-start">
-                    {item.time && (
-                      <div className="text-sm font-medium text-gray-500 mr-3 w-16 flex-shrink-0">
-                        [{item.time}]
-                      </div>
-                    )}
-                    {item.speaker && (
-                      <div className="font-semibold text-blue-700 mr-2 w-20 flex-shrink-0">
-                        {item.speaker}:
-                      </div>
-                    )}
-                    <div className="text-gray-800 flex-1">
+                  <div className="flex" data-component-name="ProsireniPrikazContent">
+                    <div className="w-1/6 pr-4">
+                      {item.time && (
+                        <span className="text-sm font-medium text-gray-700">
+                          [{item.time}]
+                        </span>
+                      )}
+                    </div>
+                    <div className="w-1/6 pr-4">
+                      {item.speaker && (
+                        <span className="font-semibold text-blue-700">
+                          {item.speaker}:
+                        </span>
+                      )}
+                    </div>
+                    <div className="w-4/6 text-gray-900 font-medium">
                       {item.text}
                     </div>
                   </div>
