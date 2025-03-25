@@ -339,13 +339,13 @@ function ProsireniPrikazContent() {
                       className="px-2 py-1 bg-white hover:bg-gray-100 rounded-md text-gray-700 transition-colors border border-gray-200"
                       onClick={extractKeyPoints}
                     >
-                      Izvuci ključne tačke
+                      Sumiraj ukratko
                     </button>
                     <button 
                       className="px-2 py-1 bg-white hover:bg-gray-100 rounded-md text-gray-700 transition-colors border border-gray-200"
                       onClick={findActionItems}
                     >
-                      Pronađi stavke
+                      Ključne tačke
                     </button>
                   </div>
                 </div>
